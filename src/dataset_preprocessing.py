@@ -4,8 +4,8 @@ import pandas as pd
 from tqdm import tqdm
 
 DIFFICULTIES = ["easy", "medium"]
-RAW_REAL_PATH = "data/real/*.json"
-RAW_FAKE_PATHS = ["data/fake/" + diff + "*.txt" for diff in DIFFICULTIES]
+RAW_REAL_PATH = "data/raw/real/*.json"
+RAW_FAKE_PATHS = ["data/raw/fake/" + diff + "*.txt" for diff in DIFFICULTIES]
 SCRYFALL_COLS = ['id', 'name', 'released_at', 'mana_cost', 'type_line', 'oracle_text']
 SCRYFALL_EXTRA_COLS = ['power', 'toughness']
 SCRYFALL_ALLOWED_LAYOUTS = ['normal', 'saga', 'prototype', 'mutate', 'leveler', 'case']
@@ -50,7 +50,7 @@ def parse_scryfall_into_text(sf_card):
         type_and_stats = sf_card['type_line'] + '((' + sf_card['loyalty'] + '))'
     else:
         type_and_stats = sf_card['type_line']
-    card_text = ".\n".join([sf_card['mana_cost'], type_and_stats, oracle])        
+    card_text = ".\\n".join([sf_card['mana_cost'], type_and_stats, oracle])        
     return card_text
 
 
@@ -68,7 +68,7 @@ def parse_minmaxir_fake_into_text(fake_card):
     oracle = ' '.join(parts[2:])
     if cardname != '':
         oracle = oracle.replace(cardname, '~')
-    card_text = "\n".join([mana_cost, type_line, oracle])
+    card_text = ".\\n".join([mana_cost, type_line, oracle])
     return card_text
 
 
@@ -93,3 +93,8 @@ def run():
     fake_cards_text = [s for fake_text in all_fakes
                        if (s := parse_minmaxir_fake_into_text(fake_text)) is not None]
     
+    # -__-__-   write to disk   -__-__- #
+    with open("data/curated/real_dataset.txt", 'w') as fout:
+        fout.write("\n".join(real_cards_text))
+    with open("data/curated/fake_dataset.txt", 'w') as fout:
+        fout.write("\n".join(fake_cards_text))
