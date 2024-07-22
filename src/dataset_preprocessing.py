@@ -64,7 +64,7 @@ def parse_minmaxir_fake_into_text(fake_card):
     if (not mana_cost.startswith('{')) or (not mana_cost.endswith('}')):
         print(fake_card)
         mana_cost = ''
-    type_line = parts[1].replace('~', '—')
+    type_line = parts[1].replace('~', '—').replace(' (', '(')
     oracle = ' '.join(parts[2:])
     if cardname != '':
         oracle = oracle.replace(cardname, '~')
