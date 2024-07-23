@@ -77,3 +77,5 @@ evaluator = pipeline('text-classification', model="Exerah/tmp_trainer")
 result = [evaluator(t['text'])[0] for t in tqdm(dataset['test'])]
 comparison = pd.DataFrame(result)
 comparison['reference'] = [id2label[t['label']] for t in dataset['test']]
+diff = comparison[comparison['label'] != comparison['reference']].copy()
+diff_dataset = [dataset['test'][x] for x in diff.index.tolist()]
