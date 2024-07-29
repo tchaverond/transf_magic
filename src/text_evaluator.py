@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, DataCollatorWithPadding, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import DataCollatorWithPadding, Trainer, TrainingArguments
 from transformers import pipeline
 import evaluate
 
@@ -41,34 +42,34 @@ def compute_metrics(eval_pred):
     predictions = np.argmax(predictions, axis=1)
     return accuracy.compute(predictions=predictions, references=labels)
 
+dataset = prepare_into_distilbert_dataset()
 
 tokenizer = AutoTokenizer.from_pretrained("distilbert/distilbert-base-uncased")
-
-dataset = prepare_into_distilbert_dataset()
 tokenized = {}
-for key, value in dataset.items():
-    tokenized[key] = []
-    for v in value:
-        tokenized_card = tokenizer(v['text'])
-        tokenized_card.update({'label': v['label']})
-        tokenized[key].append(tokenized_card)
+for dset_type, sub_dataset in dataset.items():
+    tokenized[dset_type] = []
+    for sample in sub_dataset:
+        tokenized_card = tokenizer(sample['text'])
+        tokenized_card.update({'label': sample['label']})
+        tokenized[dset_type].append(tokenized_card)
 data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 id2label = {0: 'fake', 1: 'real'}
 label2id = {'fake': 0, 'real': 1}
 
-evaluator = AutoModelForSequenceClassification.from_pretrained(
+text_evaluator = AutoModelForSequenceClassification.from_pretrained(
     "distilbert/distilbert-base-uncased", num_labels=2, 
     id2label=id2label, label2id=label2id)
-training_args = TrainingArguments(output_dir='tmp_trainer')
+training_args = TrainingArguments(output_dir='mtg_card_text_evaluator')
 accuracy = evaluate.load("accuracy")
 
-trainer = Trainer(model=evaluator, args=training_args, train_dataset=tokenized['train'], 
+trainer = Trainer(model=text_evaluator, args=training_args, train_dataset=tokenized['train'], 
                   eval_dataset=tokenized['test'], tokenizer=tokenizer,
                   data_collator=data_collator, compute_metrics=compute_metrics)
 trainer.train()
 trainer.push_to_hub("exerah-transf_magic_evaluator_v0_17-07")   # connect via Anaconda console
 
-# retrieval : Note: it's using the name given in output_dir of TrainingArguments
+### Retrieval
+# Note: it's using the name given in output_dir of TrainingArguments
 tokenizer = AutoTokenizer.from_pretrained("Exerah/tmp_trainer")
 model = AutoModelForSequenceClassification.from_pretrained("Exerah/tmp_trainer")
 
